@@ -26,11 +26,10 @@ import scala.collection.immutable.ListMap
 import scala.util.control.Breaks.{break, breakable}
 import scala.io.Source
 import scala.util.parsing.json._
-/* if we want to include kafka producer*/
-//import kafka.serializer.{ DefaultDecoder, StringDecoder }
-//import kafka.javaapi.producer.SyncProducer;
-//import kafka.javaapi.message.ByteBufferMessageSet;
-//import kafka.message.Message;
+import kafka.serializer.{ DefaultDecoder, StringDecoder }
+import kafka.javaapi.producer.SyncProducer;
+import kafka.javaapi.message.ByteBufferMessageSet;
+import kafka.message.Message;
 
 
 object App {
