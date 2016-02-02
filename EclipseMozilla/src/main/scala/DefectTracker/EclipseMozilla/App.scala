@@ -89,21 +89,67 @@ object App {
     val sc = new SparkContext("local[2]","Spark-MLlib",sparkConf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)  
     
-    // Connect to json and get bug data from Eclipse and Mozilla Defect Tracking Dataset
-    // Each bug has 12 attributes 
-    // Reports; Assigned to; CC; Status; Priority; Severity; Product; Component; OS; Version; Description; Resolution;
-    // Other than reports, all others have - when, what, who
-    val fileNames : List[String] = List ("reports", "assigned_to", "cc", "bug_status", "priority", "severity", "product", "component", "op_sys", "version", "short_desc", "resolution") 
+    /* 
+     * Connect to json and get bug data from Eclipse and Mozilla Defect Tracking Dataset. Each bug has 12 attributes 
+     [Reports; Assigned to; CC; Status; Priority; Severity; Product; Component; OS; Version; Description; Resolution]
+     classified into 2 classes:
+     report - opening, reporter, current status, current resolution
+     general - when, what, who
+     * 
+     */
+ 
+    case class report(opening:Long, reporter: String, current_status: String, current_resolution: String)
+    var fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/reports.json"""
+    var df = sqlContext.read.json(fileUrl)
+    val e_reports = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, report(p(1).toLong, p(2), p(3), p(4))))
 
-    val eclipseData = fileNames.map { fileName => 
-      val fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/""" + fileName + """.json"""
-      val file = Source.fromURL(fileUrl).mkString
-      val json:Option[Any] = JSON.parseFull(file) 
-      val map:Map[String,Any] = json.get.asInstanceOf[Map[String, Any]]
-      //val data:List[Any] = map.get("reports").get.asInstanceOf[List[Any]]
-      (fileName , map)
-      }.toMap
+    case class general(when: Long, what: String, who: String)
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/assigned_to.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_assigned_to = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+    
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/cc.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_cc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+ 
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/bug_status.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_bug_status = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+  
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/priority.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_priority = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+ 
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/severity.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_severity = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+ 
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/product.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_product = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/component.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_component = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+  
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/op_sys.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_op_sys = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/version.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_version = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
    
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/short_desc.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_short_desc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+ 
+    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/resolution.json"""
+    df = sqlContext.read.json(fileUrl)
+    val e_resolution = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+     
+    /*
+     * 
     val mozillaData = fileNames.map { fileName => 
       val fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/mozilla/""" + fileName + """.json"""
       val file = Source.fromURL(fileUrl).mkString
@@ -112,6 +158,8 @@ object App {
       //val data:List[Any] = map.get("reports").get.asInstanceOf[List[Any]]
       (fileName , map)
       }.toMap
+      * 
+      */
       
     // Regex set
     val ignore = """,;)(}{+#*][|!`="?"""
@@ -140,93 +188,18 @@ object App {
     val stopwords = filebufStopWords.getLines().toList
     filebufDictionary.close()
     filebufStopWords.close()
+
     
-    /* filter out old bugs and new bugs depending on their status */
-    val bugIDSet = eclipseData.head._2.keySet
-    val bugStatus = eclipseData.get("bug_status").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)
+    /* 
+     * Get bug descriptions & resolutions, clean it and parse it into an array of words. 
+     * Do for all old bugs. Call this as CORPUS 
+     */ 
+    
+    val data = e_reports.filter(_._2.current_status=="RESOLVED")
+      .map { r =>
+        val value = (e_short_desc.lookup(r._1).head.what + " " + e_resolution.lookup(r._1).head.what).split(" ")
+        (r._1, value)
       }
-    val bugNew = bugStatus filter(_._2 == "New")  
-    val bugNewKeys = bugNew.keys.toSet
-    val bugOld = bugStatus.filter{ x => (x._2 == "Resolved") || (x._2 == "Verified")}
-    val bugOldKeys = bugOld.keys.toSet
-    
-    
-    /* Get all info about these bugs*/
-    val bugProducts = eclipseData.get("product").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldProducts = bugProducts filterKeys bugOldKeys
-    val bugNewProducts = bugProducts filterKeys bugNewKeys
-    
-    val bugComponents = eclipseData.get("component").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldComponents = bugComponents filterKeys bugOldKeys
-    val bugNewComponents = bugComponents filterKeys bugNewKeys
-    
-    val bugOSs = eclipseData.get("op_sys").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldOSs = bugOSs filterKeys bugOldKeys
-    val bugNewOSs = bugOSs filterKeys bugNewKeys
-    
-    val bugVersions = eclipseData.get("version").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldVersions = bugVersions filterKeys bugOldKeys
-    val bugNewVersions = bugVersions filterKeys bugNewKeys
-    
-    val bugDescriptions = eclipseData.get("short_desc").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldDescriptions = bugDescriptions filterKeys bugOldKeys
-    val bugNewDescriptions = bugDescriptions filterKeys bugNewKeys
-    
-    val bugPriorities = eclipseData.get("priority").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldPriorities = bugPriorities filterKeys bugOldKeys
-    val bugNewPriorities = bugPriorities filterKeys bugNewKeys    
-    
-    val bugSeverities = eclipseData.get("severity").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldSeverities = bugSeverities filterKeys bugOldKeys
-    val bugNewSeverities = bugSeverities filterKeys bugNewKeys
-    
-    /* Get resolutions for old bugs */
-    val bugResolutions = eclipseData.get("resolution").get map {case (id, value) => 
-      val info : Map[String, String] = value.asInstanceOf[Map[String, String]]
-      val what = info.getOrElse("what", "")
-      (id, what)      
-    }
-    val bugOldResolutions = bugResolutions filterKeys bugOldKeys
-    
-    /* Get bug descriptions & resolutions, clean it and parse it into an array of words. 
-     * Do for all old bugs.
-     * Call this as CORPUS */ 
-    val bugOldKeysRDD : RDD[String] = sc.parallelize(bugOldKeys.toSeq)
-    val data = bugOldKeysRDD.map { key =>
-      val value = List (bugOldDescriptions.getOrElse(key, "") , bugOldResolutions.getOrElse(key, ""))
-      (key, value)
-    }
     val corpus = data.map(row => {
         val thisBugID = row._1
         val thisBug = row._2
@@ -263,47 +236,46 @@ object App {
               case Seq('h','t','t','p', rest @ _*) => true
               case Seq('f','t','p', rest @ _*) => true
               case Seq(_*) => false}}
-          .toSet
         (thisBugID, cleanWords)
       })
     corpus.cache()  
-    val vocabulary = corpus.map(_._2)
+    val vocab_counts = corpus.map(_._2)
       .flatMap { x => x.toSeq }
       .groupBy(identity)
       .map{ case(a,b) => (a,b.size)}
+    vocab_counts.cache()
+    val vocabulary = vocab_counts.map(_._1).zipWithIndex().map(v => (v._1, v._2.toInt))
     vocabulary.cache()
-    val vocabularyMap = vocabulary.map(_._1)
-      .zipWithIndex()
-      .collectAsMap
-      .map { case(a,b) => (a,b.toInt) }
-    val inverseVocabularyMap = vocabularyMap.map(_.swap)
+    val vocabularyInverse = vocabulary.map(_.swap)
+    vocabularyInverse.cache()
     println("Complete: parsed data into corpus -- "+corpus.count())
     
     
     // Prepare context-aware documents from CORPUS 
     val documents = corpus.map { case (id, doc) =>
-      val numericTokens = doc.map{w =>
-        var (longWord, problemWordScore, solutionWordScore) = (0.0,0.0,0.0)  
-        //RULE: word length > 7 means more meaning
-        if(w.length()>7) longWord = 10.0
-        //RULE: word indicates problem description
-        problemWordScore = bugDescriptions.find(_._1.contains(w)) match {
-          case Some(i) => 100.0
-          case None => 0.0
-        }
-        //RULE: word indicates solution description
-        solutionWordScore = bugResolutions.find(_._1.contains(w)) match {
-          case Some(i) => 1000.0
-          case None => 0.0          
-        }
-        //VALUE for term
-        val score = (longWord + problemWordScore + solutionWordScore).toDouble
-        (vocabularyMap(w) , score)
+      val bagOfWords = doc.toSet
+      val numericTokens = bagOfWords.map{w =>
+        var (countWord, longWord, problemWordScore, solutionWordScore) = (0.0, 0.0,0.0,0.0)  
+        //RULE1: word count > 3 means more meaning
+        if(doc.count(_.equals(w)) > 3) 
+          countWord = 10.0
+        //RULE2: word length > 7 means more meaning
+        if(w.length()>7) 
+          longWord = 100.0
+        //RULE3: word indicates problem description
+        if(e_short_desc.lookup(id).head.what.split(" ").contains(w))
+          problemWordScore = 1000.0
+        //RULE4: word indicates solution description
+        if(e_resolution.lookup(id).head.what.split(" ").contains(w))
+          solutionWordScore = 10000.0
+        //VALUE for term in [0, 11110]
+        val score = (countWord + longWord + problemWordScore + solutionWordScore).toDouble
+        (vocabulary.lookup(w).head, score)
         }
       val vectorInput = numericTokens.toMap
       val indices = vectorInput.map(_._1.toInt).toArray
       val values = vectorInput.map(_._2).toArray
-      val docInput = Vectors.sparse(vocabularyMap.size, indices, values)
+      val docInput = Vectors.sparse(vocabulary.count().toInt, indices, values)
       (id.toLong, docInput)
     }
     documents.cache()
@@ -326,7 +298,7 @@ object App {
     val topicIndices = ldaModel.describeTopics(ldaModel.vocabSize/numOfTopics) //top 20%
     val topics = topicIndices.map { case (terms, termWeights) =>
       terms.zip(termWeights).map { case (term, weight) => 
-        (inverseVocabularyMap(term), weight) }
+        (vocabularyInverse.lookup(term).head, weight) }
     }
     
     /* Give technicality for documents using LDA topic classification. */
@@ -339,9 +311,9 @@ object App {
     
     
     // Cluster the frequent patterns of important words to gain more knowledge from history
-    val minSup = 0.25 //very low as items are already unique
+    val minSup = 0.25 //very low as items are unique
     val fpg = new FPGrowth().setMinSupport(minSup) 
-    val patterns = fpg.run(corpus.map(_._2.toArray))
+    val patterns = fpg.run(corpus.map(_._2.toSet.toArray))
     println("Complete: FP growth")
 
     // Create 2-dimension data [what we know, what we guessed]
@@ -354,42 +326,46 @@ object App {
     docsAsFPTerms.cache()
     println("Complete: getting description data into technical dimension")
     
-    val ldaMap = docsAsHighValueTerms.collectAsMap()
-    val fpMap = docsAsFPTerms.collectAsMap()
-    
     // for each word in a case check - lda topic, fp, priority, severity
     val computedValues = corpus.map { case (id, doc) =>
         var (severityScore, priorityScore) = (0.0,0.0)  
-        if(bugOldPriorities(id) == "p1") { severityScore = 100.0}
-        if(bugOldSeverities(id).toLowerCase() == "critical") { severityScore = 100.0}
+        //RULE: if priority of report is
+        val priorities = List("P1", "P2", "P3")
+        if(priorities.contains(e_priority.lookup(id).head.what)) 
+          severityScore = 100.0
+        //RULE: if severity of report is  
+        val severities = List("major", "critical", "enhancement")
+        if(severities.contains(e_severity.lookup(id).head.what))  
+          severityScore = 100.0
         val updatedNumericTokens = doc.map{ w =>
           var (ldaWordScore, fpWordScore) = (0.0,0.0)  
           //RULE: word indicates LDA topic description
-          ldaWordScore = ldaMap.find(_._1.contains(w)) match {
-            case Some(i) => 100.0
-            case None => 0.0          
-          }
+          if (docsAsHighValueTerms.lookup(id).contains(w))
+            ldaWordScore = 10.0
           //RULE: word indicates FP description
-          fpWordScore = fpMap.find(_._1.contains(w)) match {
-            case Some(i) => 100.0
-            case None => 0.0          
-          }
+          if(docsAsFPTerms.lookup(id).contains(w))
+            fpWordScore = 10.0
           //VALUE for term in Range [0,400]
-          (severityScore + priorityScore + ldaWordScore + fpWordScore).toDouble
+          (ldaWordScore + fpWordScore).toDouble
         }
-       (id, updatedNumericTokens.sum) 
+       (id, severityScore + priorityScore + updatedNumericTokens.sum) 
       }
     
     // for each word in a case check - product, component, OS, version
-    val givenValues = bugOldKeysRDD.map { key => 
+    val products = e_product.distinct().map(_._2.what).zipWithIndex()
+    val components = e_component.distinct().map(_._2.what).zipWithIndex()
+    val os = e_op_sys.distinct().map(_._2.what).zipWithIndex()
+    val versions = e_version.distinct().map(_._2.what).zipWithIndex()
+    val givenValues = data.keys.map { key =>  
       var (productScore, componentScore, osScore, versionScore) = (0.0,0.0,0.0,0.0)  
-      if(bugOldProducts(key) == "") {}
-      if(bugOldComponents(key) == "") {}
-      if(bugOldOSs(key) == "") {}
-      if(bugOldVersions(key) == "") {}
-      val value = productScore + componentScore + osScore + versionScore
-      (key, value) 
-      }
+      val details : List[String] = List(e_product.lookup(key).head.what, e_component.lookup(key).head.what, e_op_sys.lookup(key).head.what, e_version.lookup(key).head.what)
+      productScore = products.lookup(details.apply(0)).head
+      componentScore = components.lookup(details.apply(1)).head
+      osScore = os.lookup(details.apply(2)).head
+      versionScore = versions.lookup(details.apply(3)).head
+      val value = (productScore + componentScore + osScore + versionScore).toDouble
+      (key, value)
+    }
     
     // Finally, each bug is converted into a (x,y) point on a 2D plane
     val finalValues = givenValues.join(computedValues)
@@ -422,9 +398,9 @@ object App {
     val x = points.map(f => (f._1 -> f._2.apply(0))).collect().toMap
     val y = points.map(f => (f._1 -> f._2.apply(1))).collect().toMap
     val outputClusters = kmeansPredictions
-      .filter(cluster => cluster._2.size>1)
+      .filter(cluster => cluster._2.size>1)//clusters that matter
       .map{ cluster => 
-        val outputVal = cluster._2.map(id => List(id, x.getOrElse(id, "x not found").toString(), y.getOrElse(id, "y not found").toString()))
+        val outputVal = cluster._2.map(id => Array(id, x.getOrElse(id, "x not found").toString(), y.getOrElse(id, "y not found").toString()))
         (cluster._1.toString(), outputVal)  
         } 
     val finalError = errors.last
