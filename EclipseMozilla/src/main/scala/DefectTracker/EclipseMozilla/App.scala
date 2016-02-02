@@ -78,7 +78,6 @@ object App {
   def main(args : Array[String]) {
 
     // Configs
-    val master = "spark://quickstart.cloudera:7077"
     val sparkConf = new SparkConf()
     .set("spark.storage.memoryFraction", ".8")
     .set("spark.executor.memory", "2g")
@@ -99,59 +98,59 @@ object App {
      */
  
     case class report(opening:Long, reporter: String, current_status: String, current_resolution: String)
-    var fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/reports.json"""
+    var fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/reports.json"""
     var df = sqlContext.read.json(fileUrl)
     val e_reports = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, report(p(1).toLong, p(2), p(3), p(4))))
 
     case class general(when: Long, what: String, who: String)
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/assigned_to.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/assigned_to.json"""
     df = sqlContext.read.json(fileUrl)
     val e_assigned_to = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
     
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/cc.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/cc.json"""
     df = sqlContext.read.json(fileUrl)
     val e_cc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
  
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/bug_status.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/bug_status.json"""
     df = sqlContext.read.json(fileUrl)
     val e_bug_status = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
   
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/priority.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/priority.json"""
     df = sqlContext.read.json(fileUrl)
     val e_priority = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
  
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/severity.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/severity.json"""
     df = sqlContext.read.json(fileUrl)
     val e_severity = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
  
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/product.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/product.json"""
     df = sqlContext.read.json(fileUrl)
     val e_product = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
 
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/component.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/component.json"""
     df = sqlContext.read.json(fileUrl)
     val e_component = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
   
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/op_sys.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/op_sys.json"""
     df = sqlContext.read.json(fileUrl)
     val e_op_sys = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
 
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/version.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/version.json"""
     df = sqlContext.read.json(fileUrl)
     val e_version = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
    
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/short_desc.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/short_desc.json"""
     df = sqlContext.read.json(fileUrl)
     val e_short_desc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
  
-    fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/eclipse/resolution.json"""
+    fileUrl = """/root/msr2013-bug_dataset/data/v02/eclipse/resolution.json"""
     df = sqlContext.read.json(fileUrl)
     val e_resolution = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
      
     /*
      * 
     val mozillaData = fileNames.map { fileName => 
-      val fileUrl = """https://github.com/ansymo/msr2013-bug_dataset/tree/master/data/v02/mozilla/""" + fileName + """.json"""
+      val fileUrl = """/root/msr2013-bug_dataset/data/v02/mozilla/""" + fileName + """.json"""
       val file = Source.fromURL(fileUrl).mkString
       val json:Option[Any] = JSON.parseFull(file) 
       val map:Map[String, Any] = json.get.asInstanceOf[Map[String, Any]]
