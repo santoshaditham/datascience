@@ -30,6 +30,7 @@ import kafka.serializer.{ DefaultDecoder, StringDecoder }
 import kafka.javaapi.producer;
 import kafka.javaapi.message.ByteBufferMessageSet;
 import kafka.message.Message;
+import com.google.gson.Gson;
 
 
 object App {
@@ -98,71 +99,68 @@ object App {
      * 
      */
  
-    case class report(opening:Long, reporter: String, current_status: String, current_resolution: String)
-    var fileUrl = """eclipse/reports.json"""
-    var df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_reports = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, report(p(1).toLong, p(2), p(3), p(4))))
-
-    case class general(when: Long, what: String, who: String)
-    fileUrl = """eclipse/assigned_to.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_assigned_to = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+    val gson = new Gson();
     
-    fileUrl = """eclipse/cc.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_cc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
- 
-    fileUrl = """eclipse/bug_status.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_bug_status = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
-  
-    fileUrl = """eclipse/priority.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_priority = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
- 
-    fileUrl = """eclipse/severity.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_severity = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
- 
-    fileUrl = """eclipse/product.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_product = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
-
-    fileUrl = """eclipse/component.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_component = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
-  
-    fileUrl = """eclipse/op_sys.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_op_sys = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
-
-    fileUrl = """eclipse/version.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_version = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
-   
-    fileUrl = """eclipse/short_desc.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_short_desc = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
- 
-    fileUrl = """eclipse/resolution.json"""
-    df = sqlContext.read.json(fileUrl)
-    df.printSchema()
-    val e_resolution = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, general(p(1).toLong, p(2), p(3))))
+    case class report(id:Int, opening:Long, reporter: String, current_status: String, current_resolution: String)
+    case class general(id: Int, when: Long, what: String, who: String)
+    
+    val e_reports = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/reports.json").map{line => 
+      val value = gson.fromJson(line, classOf[report])
+      (value.id, value)
+    }  
+    val e_assigned_to = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/assigned_to.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_cc = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/cc.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_bug_status = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/bug_status.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_priority = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/priority.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_severity = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/severity.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_product = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/product.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_component = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/component.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_op_sys = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/op_sys.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_version = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/version.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_short_desc = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/short_desc.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
+    val e_resolution = sc.textFile("file:///root/datascience/EclipseMozilla/eclipse/resolution.json").map{line => 
+      val value = gson.fromJson(line, classOf[general])
+      (value.id, value)
+    }
      
     /*
      * 
-    val mozillaData = fileNames.map { fileName => 
+     * 
+     *     
+     *     var df = sqlContext.read.json("file:///root/datascience/EclipseMozilla/eclipse/reports.json")
+    	val e_reports = df.map(_.mkString("").split(",")).map(p => (p(0).toInt, report(p(1).toLong, p(2), p(3), p(4))))
+    	
+    	val mozillaData = fileNames.map { fileName => 
       val fileUrl = """mozilla/""" + fileName + """.json"""
       val file = Source.fromURL(fileUrl).mkString
       val json:Option[Any] = JSON.parseFull(file) 
@@ -195,11 +193,12 @@ object App {
     
     // get info stored in all help files - dictionary words, stop words, names etc
     val filebufDictionary = Source.fromFile("/usr/share/dict/words")
-    val filebufStopWords = Source.fromFile("stopwordsFile.txt")
     val englishDictionary: scala.collection.Set[String] = filebufDictionary.getLines().toSet
-    val stopwords = filebufStopWords.getLines().toList
     filebufDictionary.close()
-    filebufStopWords.close()
+    
+    //val filebufStopWords = Source.fromFile("stopwordsFile.txt")
+    //val stopwords = filebufStopWords.getLines().toList
+    //filebufStopWords.close()
 
     
     /* 
@@ -223,8 +222,8 @@ object App {
           .stripSuffix(".").stripSuffix(":").stripSuffix(",").stripSuffix("~").stripSuffix("-")
           .stripPrefix(".").stripPrefix(":").stripPrefix(",").stripPrefix("~").stripPrefix("-")}
         val cleanWords = words
-          .filterNot { w => stopwords.contains(w) } //stop words
-          //.filterNot { w => englishDictionary.contains(w) } 
+          //.filterNot { w => stopwords.contains(w) } //stop words
+          .filterNot { w => englishDictionary.contains(w) } 
           .filterNot { w => w.length()==1 } //single chars
           .filterNot { w => bugPattern.unapplySeq(w).isDefined}
           .filterNot { w => emailPattern.unapplySeq(w).isDefined}
